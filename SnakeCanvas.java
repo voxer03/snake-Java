@@ -154,7 +154,7 @@ implements Runnable,KeyListener{
 	public void drawMenu(Graphics g) {
 		if(this.menuImage== null) {
 			try {
-				URL imagePath = SnakeCanvas.class.getResource("start0.png");
+				URL imagePath = SnakeCanvas.class.getResource("Start.png");
 				this.menuImage = Toolkit.getDefaultToolkit().getImage(imagePath);
 				
 			}
@@ -162,7 +162,7 @@ implements Runnable,KeyListener{
 				e.printStackTrace();
 			}
 		}
-		g.drawImage(menuImage,0,0,544,600,this);
+		g.drawImage(menuImage,0,0,520,600,this);
 		
 	}
 	

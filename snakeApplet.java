@@ -18,6 +18,7 @@ extends JFrame {
 		c.setFocusable(true);
 		this.add(c);
 		this.setSize(480,480);
+		this.setResizable(false);
 		this.setVisible(true);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
