@@ -39,6 +39,8 @@ implements Runnable,KeyListener{
 	private LinkedList<Point> snake;
 	private Point fruit;
 	
+	private boolean isAtEndgame=false;
+	private boolean Won=false;
 	private int direction=Direction.NO_DIRECTION;
 	
 	//private Graphics globalGraphics;
@@ -51,8 +53,12 @@ implements Runnable,KeyListener{
 			runThread=new Thread(this);
 			runThread.start();
 		}
+		
 		if(isInMenu) {
 			drawMenu(g);
+		}
+		else if(isAtEndgame) {
+			drawEndgame(g);
 		}
 		else {
 			if(snake==null) {
@@ -148,6 +154,7 @@ implements Runnable,KeyListener{
 		snake.add(new Point(1,0));
 		snake.add(new Point(0,0));
 		direction=Direction.NO_DIRECTION;
+		isAtEndgame=false;
 		
 	}
 	
@@ -170,12 +177,13 @@ implements Runnable,KeyListener{
 		
 		g.drawString("Score: "+SCORE,0,BOX_HEIGHT*GRID_HEIGHT+15);
 		g.drawString("High Score: "+ HIGH_SCORE,BOX_WIDTH*GRID_WIDTH-400,BOX_HEIGHT*GRID_HEIGHT+15);
+		g.drawString("Press Esc To Pause", 0, BOX_HEIGHT*GRID_HEIGHT+30);
 	}
 	
 
 	public void drawGrid(Graphics g) {
 		g.drawRect(0, 0, GRID_WIDTH*BOX_WIDTH,GRID_HEIGHT*BOX_HEIGHT);
-		g.setColor(Color.WHITE);
+		
 		for (int x=BOX_WIDTH;x<GRID_WIDTH*BOX_WIDTH;x+=BOX_WIDTH) {
 			g.drawLine(x, 0, x,BOX_HEIGHT*GRID_HEIGHT );
 		}
@@ -197,16 +205,36 @@ implements Runnable,KeyListener{
 			}
 			g.fillRect(p.x * BOX_WIDTH,p.y*BOX_HEIGHT,BOX_WIDTH,BOX_HEIGHT);
 		}
-		g.setColor(Color.WHITE);
+		g.setColor(Color.BLACK);
 	} 
 	
 	public void drawFruit(Graphics g) {
 		g.setColor(Color.RED);
 		g.fillOval(fruit.x * BOX_WIDTH, fruit.y*BOX_HEIGHT, BOX_WIDTH, BOX_HEIGHT);
-		g.setColor(Color.WHITE);
+		g.setColor(Color.BLACK);
 	}
 	
+	public void drawEndgame(Graphics g) {
+		BufferedImage endGameImage =new BufferedImage(this.getPreferredSize().width,this.getPreferredSize().height,BufferedImage.TYPE_INT_ARGB);
+		Graphics endGameGraphics= endGameImage.getGraphics();
+		endGameGraphics.setFont(new Font("TimesRoman",Font.BOLD,20));
+		endGameGraphics.setColor(Color.BLACK);
+		if(Won) {
+			endGameGraphics.drawString("You made this far!!! You Won",180,200);
+		}
+		else {
+			endGameGraphics.drawString("You are too far! You Lose",170,200);
+		}
+		endGameGraphics.drawString("Your Score : "+this.SCORE,170,230);
+		endGameGraphics.drawString("Press Space to Start New Game!!",170,260);
+		
+		g.drawImage(endGameImage,0,0,this);
+	}
 	public void move() {
+		
+		if(this.direction==Direction.NO_DIRECTION) {
+			return;
+		}
 		Point head = snake.peekFirst();
 		Point newPoint = head;
 		switch(direction) {
@@ -223,7 +251,8 @@ implements Runnable,KeyListener{
 			newPoint = new Point(head.x + 1,head.y);
 			break;
 		}
-		snake.remove(snake.peekLast());
+		if(this.direction!=Direction.NO_DIRECTION)
+			snake.remove(snake.peekLast());
 		
 		if(newPoint.equals(fruit)) {
 			SCORE+=10;
@@ -248,27 +277,40 @@ implements Runnable,KeyListener{
 		}
 		else if(newPoint.x < 0 || newPoint.x > GRID_WIDTH-1) {
 			checkScore();
-			generateDefaultSnake();
+			Won=false;
+			isAtEndgame=true;
+			//generateDefaultSnake();
 			return;
 		}
 		else if(newPoint.y < 0 || newPoint.y > GRID_HEIGHT-1) {
 			checkScore();
-			generateDefaultSnake();
+			Won=false;
+			isAtEndgame=true;
+			//generateDefaultSnake();
 			return;
 		}
 		else if(snake.contains(newPoint)) {
 			checkScore();
-			generateDefaultSnake();
+			Won=false;
+			isAtEndgame=true;
+			//generateDefaultSnake();
 			return;
+		}
+		else if(snake.size() ==(GRID_WIDTH*GRID_HEIGHT)) {
+			//we won
+			checkScore();
+			Won=true;
+			isAtEndgame=true;
 		}
 		snake.push(newPoint);
 	}
 	@Override
 	public void run() {
 		while(true) {
-			if(!isInMenu)
-				move();
 			repaint();
+			if(!isInMenu && !isAtEndgame)
+				move();
+			
 			
 			try {
 				Thread .currentThread();
@@ -304,10 +346,18 @@ implements Runnable,KeyListener{
 				direction=Direction.EAST;
 			break;
 		case KeyEvent.VK_ESCAPE:
-			pause();
+			isInMenu=true;
+			break;
 		case KeyEvent.VK_ENTER:
 			if(isInMenu) {
 				isInMenu=false;
+				repaint();
+			}
+			break;
+		case KeyEvent.VK_SPACE:
+			if(isAtEndgame) {
+				isAtEndgame=false;
+				generateDefaultSnake();
 				repaint();
 			}
 			break;
@@ -319,12 +369,7 @@ implements Runnable,KeyListener{
 		// TODO Auto-generated method stub
 		
 	}
-	public void pause() {
-		//JOptionPane.showMessageDialog(this, "Game Paused Press ok to continue", "Pause", JOptionPane.INFORMATION_MESSAGE);
-		int option=JOptionPane.showConfirmDialog(this, "Suchit");
-		
-		
-	}
+	
 	public String getHighScore() {
 		FileReader readFile=null;
 		BufferedReader reader = null;
